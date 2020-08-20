@@ -236,6 +236,17 @@ public abstract class AbstractPluginManager implements PluginManager {
     }
 
     /**
+     * Unload all plugins
+     */
+    @Override
+    public void unloadPlugins() {
+        // wrap resolvedPlugins in new list because of concurrent modification
+        for (PluginWrapper pluginWrapper : new ArrayList<>(resolvedPlugins)) {
+            unloadPlugin(pluginWrapper.getPluginId());
+        }
+    }
+
+    /**
      * Unload the specified plugin and it's dependents.
      */
     @Override
@@ -243,7 +254,7 @@ public abstract class AbstractPluginManager implements PluginManager {
         return unloadPlugin(pluginId, true);
     }
 
-    private boolean unloadPlugin(String pluginId, boolean unloadDependents) {
+    protected boolean unloadPlugin(String pluginId, boolean unloadDependents) {
         try {
             if (unloadDependents) {
                 List<String> dependents = dependencyResolver.getDependents(pluginId);
@@ -330,11 +341,14 @@ public abstract class AbstractPluginManager implements PluginManager {
                     log.info("Start plugin '{}'", getPluginLabel(pluginWrapper.getDescriptor()));
                     pluginWrapper.getPlugin().start();
                     pluginWrapper.setPluginState(PluginState.STARTED);
+                    pluginWrapper.setFailedException(null);
                     startedPlugins.add(pluginWrapper);
-
+                } catch (Exception | LinkageError e) {
+                    pluginWrapper.setPluginState(PluginState.FAILED);
+                    pluginWrapper.setFailedException(e);
+                    log.error("Unable to start plugin '{}'", getPluginLabel(pluginWrapper.getDescriptor()), e);
+                } finally {
                     firePluginStateEvent(new PluginStateEvent(this, pluginWrapper, pluginState));
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
                 }
             }
         }
@@ -368,7 +382,10 @@ public abstract class AbstractPluginManager implements PluginManager {
         }
 
         for (PluginDependency dependency : pluginDescriptor.getDependencies()) {
-            startPlugin(dependency.getPluginId());
+            // start dependency only if it marked as required (non optional) or if it optional and loaded
+            if (!dependency.isOptional() || plugins.containsKey(dependency.getPluginId())) {
+                startPlugin(dependency.getPluginId());
+            }
         }
 
         log.info("Start plugin '{}'", getPluginLabel(pluginDescriptor));
@@ -415,7 +432,7 @@ public abstract class AbstractPluginManager implements PluginManager {
         return stopPlugin(pluginId, true);
     }
 
-    private PluginState stopPlugin(String pluginId, boolean stopDependents) {
+    protected PluginState stopPlugin(String pluginId, boolean stopDependents) {
         checkPluginId(pluginId);
 
         PluginWrapper pluginWrapper = getPlugin(pluginId);
@@ -451,7 +468,7 @@ public abstract class AbstractPluginManager implements PluginManager {
         return pluginWrapper.getPluginState();
     }
 
-    private void checkPluginId(String pluginId) {
+    protected void checkPluginId(String pluginId) {
         if (!plugins.containsKey(pluginId)) {
             throw new IllegalArgumentException(String.format("Unknown pluginId %s", pluginId));
         }
@@ -722,7 +739,7 @@ public abstract class AbstractPluginManager implements PluginManager {
         PluginDescriptor pluginDescriptor = pluginWrapper.getDescriptor();
         log.warn("Plugin '{}' requires a minimum system version of {}, and you have {}",
             getPluginLabel(pluginDescriptor),
-            pluginWrapper.getDescriptor().getRequires(),
+            requires,
             getSystemVersion());
 
         return false;
@@ -910,7 +927,7 @@ public abstract class AbstractPluginManager implements PluginManager {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> List<Class<? extends T>> getExtensionClasses(List<ExtensionWrapper<T>> extensionsWrapper) {
+    protected <T> List<Class<? extends T>> getExtensionClasses(List<ExtensionWrapper<T>> extensionsWrapper) {
         List<Class<? extends T>> extensionClasses = new ArrayList<>(extensionsWrapper.size());
         for (ExtensionWrapper<T> extensionWrapper : extensionsWrapper) {
             Class<T> c = (Class<T>) extensionWrapper.getDescriptor().extensionClass;
@@ -920,7 +937,7 @@ public abstract class AbstractPluginManager implements PluginManager {
         return extensionClasses;
     }
 
-    private <T> List<T> getExtensions(List<ExtensionWrapper<T>> extensionsWrapper) {
+    protected <T> List<T> getExtensions(List<ExtensionWrapper<T>> extensionsWrapper) {
         List<T> extensions = new ArrayList<>(extensionsWrapper.size());
         for (ExtensionWrapper<T> extensionWrapper : extensionsWrapper) {
             try {

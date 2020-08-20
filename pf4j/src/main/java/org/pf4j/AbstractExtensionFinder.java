@@ -63,7 +63,7 @@ public abstract class AbstractExtensionFinder implements ExtensionFinder, Plugin
             result.addAll(pluginExtensions);
         }
 
-        if (entries.isEmpty()) {
+        if (result.isEmpty()) {
             log.debug("No extensions found for extension point '{}'", type.getName());
         } else {
             log.debug("Found {} extensions for extension point '{}'", result.size(), type.getName());
@@ -348,7 +348,7 @@ public abstract class AbstractExtensionFinder implements ExtensionFinder, Plugin
         return new ExtensionWrapper<>(descriptor, pluginManager.getExtensionFactory());
     }
 
-    private Extension findExtensionAnnotation(Class<?> clazz) {
+    public static Extension findExtensionAnnotation(Class<?> clazz) {
         if (clazz.isAnnotationPresent(Extension.class)) {
             return clazz.getAnnotation(Extension.class);
         }
@@ -356,9 +356,11 @@ public abstract class AbstractExtensionFinder implements ExtensionFinder, Plugin
         // search recursively through all annotations
         for (Annotation annotation : clazz.getAnnotations()) {
             Class<? extends Annotation> annotationClass = annotation.annotationType();
-            Extension extensionAnnotation = findExtensionAnnotation(annotationClass);
-            if (extensionAnnotation != null) {
-                return extensionAnnotation;
+            if (!annotationClass.getName().startsWith("java.lang.annotation")) {
+                Extension extensionAnnotation = findExtensionAnnotation(annotationClass);
+                if (extensionAnnotation != null) {
+                    return extensionAnnotation;
+                }
             }
         }
 

@@ -12,6 +12,36 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 #### Removed
 
+### [3.4.1] - 2020-08-14
+
+#### Fixed
+- [#371]: `ClosedFileSystemException` when I run demo (Windows)
+- [#391]: Incorrect enum selection in `ClassLoadingStrategy.ADP`
+
+#### Changed
+
+#### Added
+
+#### Removed
+
+### [3.3.0] - 2020-04-21
+
+#### Fixed
+- [#355]: Cannot remove plugin jar file after unloading
+- [#359]: Calls to `File.mkdirs` in unzip logic may silently fail
+- [#363]: StackOverflow in `AbstractExtensionFinder.findExtensionAnnotation`
+- [#366]: Check proper list for debug logging
+
+#### Changed
+- [#364]: Failed plugin state added. When plugin failed to start previous state was kept
+- [#370]: Improve annotation processor error messages
+
+#### Added
+- [#352]: Add `equals`/`hashCode` to some data classes
+- [#365]: `PluginClassLoader` does not resolve classpath resources from plugin dependencies
+
+#### Removed
+
 ### [3.2.0] - 2019-11-29
 
 #### Fixed
@@ -364,7 +394,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 #### Removed
 
-[unreleased]: https://github.com/decebals/pf4j/compare/release-3.2.0...HEAD
+[unreleased]: https://github.com/decebals/pf4j/compare/release-3.4.1...HEAD
+[3.4.1]: https://github.com/decebals/pf4j/compare/release-3.4.0...release-3.4.1
+[3.4.1]: https://github.com/decebals/pf4j/compare/release-3.3.0...release-3.4.0
+[3.3.0]: https://github.com/decebals/pf4j/compare/release-3.2.0...release-3.3.0
 [3.2.0]: https://github.com/decebals/pf4j/compare/release-3.1.0...release-3.2.0
 [3.1.0]: https://github.com/decebals/pf4j/compare/release-3.0.0...release-3.1.0
 [3.0.0]: https://github.com/decebals/pf4j/compare/release-2.6.0...release-3.0.0
@@ -386,6 +419,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 [0.11.0]: https://github.com/decebals/pf4j/compare/release-0.10.0...release-0.11.0
 [0.10.0]: https://github.com/decebals/pf4j/compare/release-0.9.0...release-0.10.0
 
+[#391]: https://github.com/pf4j/pf4j/issues/391
+[#371]: https://github.com/pf4j/pf4j/issues/371
+[#370]: https://github.com/pf4j/pf4j/pull/370
+[#366]: https://github.com/pf4j/pf4j/pull/366
+[#365]: https://github.com/pf4j/pf4j/pull/365
+[#364]: https://github.com/pf4j/pf4j/pull/364
+[#363]: https://github.com/pf4j/pf4j/issues/363
+[#359]: https://github.com/pf4j/pf4j/issues/359
+[#355]: https://github.com/pf4j/pf4j/issues/355
+[#352]: https://github.com/pf4j/pf4j/pull/352
 [#350]: https://github.com/pf4j/pf4j/pull/350
 [#349]: https://github.com/pf4j/pf4j/pull/349
 [#348]: https://github.com/pf4j/pf4j/pull/348

@@ -172,6 +172,34 @@ public class ExtensionAnnotationProcessor extends AbstractProcessor {
         return storage;
     }
 
+    private void processExtensionElement(Element element) {
+        // check if @Extension is put on class and not on method or constructor
+        if (!(element instanceof TypeElement)) {
+            error(element, "Put annotation only on classes (no methods, no fields)");
+            return;
+        }
+
+        // check if class extends/implements an extension point
+        if (!ignoreExtensionPoint && !isExtension(element.asType())) {
+            error(element, "%s is not an extension (it doesn't implement ExtensionPoint)", element);
+            return;
+        }
+
+        TypeElement extensionElement = (TypeElement) element;
+        List<TypeElement> extensionPointElements = findExtensionPoints(extensionElement);
+        if (extensionPointElements.isEmpty()) {
+            error(element, "No extension points found for extension %s", extensionElement);
+            return;
+        }
+
+        String extension = getBinaryName(extensionElement);
+        for (TypeElement extensionPointElement : extensionPointElements) {
+            String extensionPoint = getBinaryName(extensionPointElement);
+            Set<String> extensionPoints = extensions.computeIfAbsent(extensionPoint, k -> new TreeSet<>());
+            extensionPoints.add(extension);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private List<TypeElement> findExtensionPoints(TypeElement extensionElement) {
         List<TypeElement> extensionPointElements = new ArrayList<>();
@@ -211,11 +239,13 @@ public class ExtensionAnnotationProcessor extends AbstractProcessor {
             // pickup the first interface
             if (extensionPointElements.isEmpty() && ignoreExtensionPoint) {
                 if (interfaces.isEmpty()) {
-                    error(extensionElement, "%s is not an extension (it doesn't implement any interface)", extensionElement);
+                    error(extensionElement, "Cannot use %s as extension point with %s compiler arg (it doesn't implement any interface)",
+                        extensionElement, IGNORE_EXTENSION_POINT);
                 } else if (interfaces.size() == 1) {
                     extensionPointElements.add(getElement(interfaces.get(0)));
                 } else {
-                    error(extensionElement, "%s is not an extension (it implements multiple interfaces)", extensionElement);
+                    error(extensionElement, "Cannot use %s as extension point with %s compiler arg (it implements multiple interfaces)",
+                        extensionElement, IGNORE_EXTENSION_POINT);
                 }
             }
         }
@@ -261,34 +291,6 @@ public class ExtensionAnnotationProcessor extends AbstractProcessor {
         // search in processing options and system properties
         ignoreExtensionPoint = getProcessingEnvironment().getOptions().containsKey(IGNORE_EXTENSION_POINT) ||
             System.getProperty(IGNORE_EXTENSION_POINT) != null;
-    }
-
-    private void processExtensionElement(Element element) {
-        // check if @Extension is put on class and not on method or constructor
-        if (!(element instanceof TypeElement)) {
-            error(element, "Put annotation only on classes (no methods, no fields)");
-            return;
-        }
-
-        // check if class extends/implements an extension point
-        if (!ignoreExtensionPoint && !isExtension(element.asType())) {
-            error(element, "%s is not an extension (it doesn't implement ExtensionPoint)", element);
-            return;
-        }
-
-        TypeElement extensionElement = (TypeElement) element;
-        List<TypeElement> extensionPointElements = findExtensionPoints(extensionElement);
-        if (extensionPointElements.isEmpty()) {
-            error(element, "No extension points found for extension %s", extensionElement);
-            return;
-        }
-
-        String extension = getBinaryName(extensionElement);
-        for (TypeElement extensionPointElement : extensionPointElements) {
-            String extensionPoint = getBinaryName(extensionPointElement);
-            Set<String> extensionPoints = extensions.computeIfAbsent(extensionPoint, k -> new TreeSet<>());
-            extensionPoints.add(extension);
-        }
     }
 
     private TypeElement getElement(TypeMirror typeMirror) {

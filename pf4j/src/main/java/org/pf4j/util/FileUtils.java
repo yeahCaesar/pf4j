@@ -42,13 +42,13 @@ import java.util.List;
 /**
  * @author Decebal Suiu
  */
-public class FileUtils {
+public final class FileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(FileUtils.class);
 
     public static List<String> readLines(Path path, boolean ignoreComments) throws IOException {
         File file = path.toFile();
-        if (!file.exists() || !file.isFile()) {
+        if (!file.isFile()) {
             return new ArrayList<>();
         }
 
@@ -117,7 +117,7 @@ public class FileUtils {
         FileFilter jarFilter = new JarFileFilter();
         FileFilter directoryFilter = new DirectoryFileFilter();
 
-        if (Files.exists(folder) && Files.isDirectory(folder)) {
+        if (Files.isDirectory(folder)) {
             File[] jars = folder.toFile().listFiles(jarFilter);
             for (int i = 0; (jars != null) && (i < jars.length); ++i) {
                 bucket.add(jars[i]);
@@ -161,7 +161,9 @@ public class FileUtils {
 
         try {
             Files.delete(path);
-        } catch (IOException ignored) { }
+        } catch (IOException ignored) {
+            // ignored
+        }
     }
 
     /**
@@ -222,7 +224,7 @@ public class FileUtils {
             // transformation for Windows OS
             pathString = StringUtils.addStart(pathString.replace("\\", "/"), "/");
             // space is replaced with %20
-            pathString = pathString.replaceAll(" ","%20");
+            pathString = pathString.replace(" ","%20");
             uri = URI.create("jar:file:" + pathString);
         }
 
@@ -232,6 +234,16 @@ public class FileUtils {
     public static Path getPath(URI uri, String first, String... more) throws IOException {
         try (FileSystem fs = getFileSystem(uri)) {
             return fs.getPath(first, more);
+        }
+    }
+
+    public static void closePath(Path path) {
+        if (path != null) {
+            try {
+                path.getFileSystem().close();
+            } catch (Exception e) {
+                // close silently
+            }
         }
     }
 
@@ -263,4 +275,6 @@ public class FileUtils {
         }
     }
 
+    private FileUtils() {
+    }
 }

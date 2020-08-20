@@ -32,6 +32,8 @@ public class PluginWrapper {
     private PluginState pluginState;
     private RuntimeMode runtimeMode;
 
+    private Throwable failedException;
+
     Plugin plugin; // cache
 
     public PluginWrapper(PluginManager pluginManager, PluginDescriptor descriptor, Path pluginPath, ClassLoader pluginClassLoader) {
@@ -137,6 +139,18 @@ public class PluginWrapper {
 
     public void setPluginFactory(PluginFactory pluginFactory) {
         this.pluginFactory = pluginFactory;
+    }
+
+    /**
+     * Returns the exception with which the plugin fails to start.
+     * See @{link PluginStatus#FAILED}.
+     */
+    public Throwable getFailedException() {
+        return failedException;
+    }
+
+    public void setFailedException(Throwable failedException) {
+        this.failedException = failedException;
     }
 
 }
